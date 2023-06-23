@@ -21,3 +21,29 @@ Sure, here is a checklist for creating a package like NumPy in Dart:
     - [ ] Follow the publishing guidelines for the Dart package repository
     - [ ] Document your package's features and usage
     - [ ] Publish your package to the Dart package repository
+
+__
+needed 
+
+numpy oprtations for ml 
+
+
+
+
+swap axes
+bincount
+unique
+covariance matrix
+
+
+
+
+
+
+mean
+variance
+std
+eigenvalues
+
+
+random choice--->random module

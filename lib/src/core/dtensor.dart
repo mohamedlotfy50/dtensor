@@ -41,11 +41,11 @@ class DTensor<T extends Object> {
   }
 
   factory DTensor.zeros(List<int> shape) {
-    return DTensor._(SparesTensor<T>.zeros(
+    return DTensor<T>._(SparesTensor<T>.zeros(
         Shape(shape: shape, size: shape.multiply(), dimCount: [])));
   }
   factory DTensor.ones(List<int> shape) {
-    return DTensor._(SparesTensor<T>.ones(
+    return DTensor<T>._(SparesTensor<T>.ones(
         Shape(shape: shape, size: shape.multiply(), dimCount: [])));
   }
 
@@ -53,12 +53,71 @@ class DTensor<T extends Object> {
     final _newShape =
         Shape(shape: newShape, size: shape.multiply(), dimCount: []);
     if (Shape.isEqual(_tensor.shape, _newShape)) {
-      return DTensor._(_tensor);
+      return DTensor<T>._(_tensor);
     }
-    return DTensor._(_tensor.reshape(_newShape));
+    return DTensor<T>._(_tensor.reshape(_newShape));
+  }
+
+  DTensor<T> flatten() {
+    return DTensor<T>._(_tensor.reshape(
+      Shape(
+        shape: [size],
+        size: size,
+        dimCount: [],
+      ),
+    ));
   }
 
   dynamic get(List<int> index) {
     return _tensor.get(index);
+  }
+
+  DTensor<T> where(bool Function(T) condition, T Function(T) operation) {
+    return DTensor<T>._(_tensor.where(condition, operation));
+  }
+
+  DTensor<T> argWhere(bool Function(T) condition) {
+    throw Exception();
+  }
+
+  static DTensor<num> sign(DTensor<num> tensor) {
+    return DTensor<num>._(tensor._tensor.sign());
+  }
+
+  static DTensor<num> log(DTensor<num> tensor) {
+    return DTensor<num>._(tensor._tensor.log());
+  }
+
+  static DTensor<num> sqrt(DTensor<num> tensor) {
+    return DTensor<num>._(tensor._tensor.sqrt());
+  }
+
+  static DTensor<num> argMax(DTensor<num> tensor) {
+    throw Exception();
+  }
+
+  static DTensor<num> argMin(DTensor<num> tensor) {
+    throw Exception();
+  }
+
+  static DTensor<num> argSort(DTensor<num> tensor, {int axis = 0}) {
+    throw Exception();
+  }
+
+  static DTensor<num> sort(DTensor<num> tensor, {int axis = 0}) {
+    throw Exception();
+  }
+
+  static DTensor<num> sum(DTensor<num> tensor, {int axis = 0}) {
+    throw Exception();
+  }
+
+  DTensor<T> swapAxis(int axis1, int axis2) {
+    //TODO: not working well
+    return DTensor<T>._(_tensor.swapAxis(axis1, axis2));
+  }
+
+  T getByAxis(int index, int axis) {
+    return _tensor.getElementByAxis(index, axis);
   }
 }

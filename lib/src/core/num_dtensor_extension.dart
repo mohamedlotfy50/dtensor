@@ -138,59 +138,8 @@ extension numDTensorExtension on DTensor<num> {
     if (this is ScalarTensor<num> || second is ScalarTensor<num>) {
       return this * second;
     }
-    //  else if (this.shape.length == 2 && second.shape.length == 2) {
-    //   return matMult(second);
-    // }
-    // final Shape? resultShape =
-    //     Shape.dot(this._tensor.shape, second._tensor.shape);
-    // if (resultShape == null) {
-    //   throw Exception();
-    // }
-    // OperatorHelper<num> operatorHelper = OperatorHelper<num>();
 
-    late int i;
-    if (this.shape.length == 1 && second.shape.length == 1) {
-      i = 1;
-    } else {
-      i = this.shape.last;
-    }
-    for (int i = 0; i < this._tensor.shape.size; i++) {
-      print(
-          '${this._tensor.getRowElementByOrder(i)}x${second._tensor.getColumnElementByOrder(i)}');
-    }
-    // while (i > 0) {
-    //   int dim = 0;
-    //   num sum = 0;
-
-    //   while (dim < this._tensor.shape.last || dim < second._tensor.shape.last) {
-    //     // num result = this._tensor.getRowElementByRowAndColumn(i, dim) *
-    //     //     second._tensor.getColumnElementByRowAndColumn(dim, i);
-    //     // sum += result;
-    //     dim += 1;
-    //   }
-    //   operatorHelper.addResult(sum);
-    //   i -= 1;
-    // }
     throw Exception();
-
-    // if (operatorHelper.isSparse) {
-    //   return DTensor._(
-    //     SparesTensor(
-    //       operatorHelper.mapValue,
-    //       resultShape,
-    //       operatorHelper.sparseValue,
-    //       this._tensor.memoryOrder,
-    //     ),
-    //   );
-    // }
-
-    // return DTensor._(
-    //   DenseTensor(
-    //     operatorHelper.tensorValue,
-    //     resultShape,
-    //     this._tensor.memoryOrder,
-    //   ),
-    // );
   }
 
   //! matrix multiply
@@ -241,20 +190,49 @@ extension numDTensorExtension on DTensor<num> {
     if (axis > shape.length) {
       throw Exception();
     }
-    late final Shape newShape;
+    late final Shape resultShape;
     if (keepDims) {
-      newShape = _tensor.shape.replaceDim(axis, 1);
+      resultShape = _tensor.shape.replaceDim(axis, 1);
     } else {
-      newShape = _tensor.shape.removeDim(axis);
+      resultShape = _tensor.shape.removeDim(axis);
     }
-    List<num> result = List.filled(newShape.size, double.negativeInfinity);
-    for (int i = 0; i < newShape.size; i++) {
-      if (_tensor.getRowElementByOrder(i * newShape.size) > result[i]) {
-        result[i] = _tensor.getRowElementByOrder(i);
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.multiply(exclude: axis);
+    int innerDimensions = shape.multiply(start: axis + 1);
+    int jump = shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num? small;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = _tensor.getRowElementByOrder(pointer + (y * innerDimensions));
+        if (small == null || val > small) {
+          small = val;
+        }
       }
+      operatorHelper.addResult(small!);
     }
+    if (operatorHelper.isSparse) {
+      return DTensor._(
+        SparesTensor(
+          operatorHelper.mapValue,
+          resultShape,
+          operatorHelper.sparseValue,
+          MemoryOrder.c,
+        ),
+      );
+    }
+
     return DTensor._(
-      DenseTensor(result, newShape, MemoryOrder.c),
+      DenseTensor(
+        operatorHelper.tensorValue,
+        resultShape,
+        MemoryOrder.c,
+      ),
     );
   }
 
@@ -275,14 +253,77 @@ extension numDTensorExtension on DTensor<num> {
     }
     OperatorHelper<num> operatorHelper = OperatorHelper<num>();
 
-    int step = shape.multiply(end: axis + 1);
+    int externlLoop = shape.multiply(exclude: axis);
+    int innerDimensions = shape.multiply(start: axis + 1);
+    int jump = shape.multiply(start: axis);
 
-    for (int i = 0; i < _tensor.shape.size; i++) {
-      // print(_tensor.getRowElementByOrder(i));
-      operatorHelper.min(i % step, _tensor.getRowElementByOrder(i));
+    for (int i = 0; i < externlLoop; i++) {
+      num? small;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = _tensor.getRowElementByOrder(pointer + (y * innerDimensions));
+        if (small == null || val < small) {
+          small = val;
+        }
+      }
+      operatorHelper.addResult(small!);
     }
-    print(operatorHelper.tensorValue.length);
+    if (operatorHelper.isSparse) {
+      return DTensor._(
+        SparesTensor(
+          operatorHelper.mapValue,
+          resultShape,
+          operatorHelper.sparseValue,
+          MemoryOrder.c,
+        ),
+      );
+    }
 
+    return DTensor._(
+      DenseTensor(
+        operatorHelper.tensorValue,
+        resultShape,
+        MemoryOrder.c,
+      ),
+    );
+  }
+
+  DTensor<num> sum({int? axis, bool keepDims = false}) {
+    if (axis == null) {
+      return DTensor<num>._(
+        _tensor.max(),
+      );
+    }
+    if (axis > shape.length) {
+      throw Exception();
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = _tensor.shape.replaceDim(axis, 1);
+    } else {
+      resultShape = _tensor.shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.multiply(exclude: axis);
+    int innerDimensions = shape.multiply(start: axis + 1);
+    int jump = shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num result = 0;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = _tensor.getRowElementByOrder(pointer + (y * innerDimensions));
+        result += val;
+      }
+      operatorHelper.addResult(result);
+    }
     if (operatorHelper.isSparse) {
       return DTensor._(
         SparesTensor(

@@ -79,10 +79,8 @@ class DenseTensor<T extends Object> extends Tensor<T> {
     if (memoryOrder == MemoryOrder.c) {
       return tensor[index];
     }
-
     int currentIndex =
         (index % shape.last) * shape[shape.length - 2] + (index ~/ shape.last);
-
     return tensor[currentIndex];
   }
 
@@ -171,16 +169,76 @@ class DenseTensor<T extends Object> extends Tensor<T> {
   }
 
   @override
-  List<T> getAxisElements(int axis, {int? length}) {
+  List<T> getAxisElements(int axis) {
+    if (axis > shape.length) {
+      throw Exception();
+    }
     List<T> subList = [];
     int elementLength = shape.shape.multiply(start: axis);
     int step = shape.shape.multiply(start: axis + 1);
-    if (length != null && length < elementLength) {
-      throw Exception();
-    }
-    for (int i = 0; i < (length ?? elementLength); i++) {
+
+    for (int i = 0; i < elementLength; i++) {
       subList.add(tensor[(i + step) % shape[elementLength]]);
     }
     return subList;
+  }
+
+  @override
+  DenseTensor<T> where(bool Function(T) condition, T Function(T) operation) {
+    List<T> result = [];
+
+    for (T element in tensor) {
+      if (condition(element)) {
+        result.add(operation(element));
+      } else {
+        result.add(element);
+      }
+    }
+
+    return DenseTensor<T>(result, shape, memoryOrder);
+  }
+
+  @override
+  DenseTensor<num> log() {
+    List<num> result = [];
+    for (num element in tensor as List<num>) {
+      result.add(math.log(element));
+    }
+    return DenseTensor<num>(result, shape, memoryOrder);
+  }
+
+  @override
+  DenseTensor<num> sign() {
+    List<num> result = [];
+    for (num element in tensor as List<num>) {
+      result.add(element.sign);
+    }
+    return DenseTensor<num>(result, shape, memoryOrder);
+  }
+
+  @override
+  DenseTensor<num> sqrt() {
+    List<num> result = [];
+    for (num element in tensor as List<num>) {
+      result.add(math.sqrt(element));
+    }
+    return DenseTensor<num>(result, shape, memoryOrder);
+  }
+
+  @override
+  DenseTensor<T> swapAxis(int a, int b) {
+    return DenseTensor<T>(tensor, shape.swap(a, b), memoryOrder);
+  }
+
+  @override
+  T getElementByAxis(int index, int axis) {
+    if (axis > shape.length - 1) {
+      throw Exception();
+    }
+    int step = shape.shape.multiply(start: axis + 1) - 1;
+    if (memoryOrder == MemoryOrder.c) {
+      return getRowElementByOrder((index + step));
+    }
+    return getColumnElementByOrder((index * step) % tensor.length);
   }
 }

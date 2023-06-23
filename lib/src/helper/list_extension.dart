@@ -1,8 +1,10 @@
 extension ListExtension on List<int> {
-  int multiply({int? start, int? end}) {
+  int multiply({int? start, int? end, int? exclude}) {
     int total = 1;
     for (int i = (start ?? 0); i < (end ?? length); i++) {
-      total *= this[i];
+      if (!(exclude != null && exclude == i)) {
+        total *= this[i];
+      }
     }
     return total;
   }

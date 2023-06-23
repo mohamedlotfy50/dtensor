@@ -213,4 +213,71 @@ class SparesTensor<T extends Object> extends Tensor<T> {
     // TODO: implement average
     throw UnimplementedError();
   }
+
+  @override
+  List<T> getAxisElements(int axis) {
+    // TODO: implement getAxisElements
+    throw UnimplementedError();
+  }
+
+  @override
+  SparesTensor<T> where(bool Function(T) condition, T Function(T) operation) {
+    Map<int, T> result = {};
+    T sparseResullt =
+        condition(sparesValue) ? operation(sparesValue) : sparesValue;
+
+    _value.forEach((key, value) {
+      if (condition(value)) {
+        result[key] = operation(value);
+      } else {
+        result[key] = value;
+      }
+    });
+
+    return SparesTensor(result, shape, sparseResullt, memoryOrder);
+  }
+
+  @override
+  SparesTensor<num> log() {
+    final Map<int, num> result = {};
+    (_value as Map<int, num>).forEach((key, value) {
+      result[key] = math.log(value);
+    });
+
+    return SparesTensor<num>(
+        result, shape, math.log(sparesValue as num), memoryOrder);
+  }
+
+  @override
+  SparesTensor<num> sign() {
+    final Map<int, num> result = {};
+    (_value as Map<int, num>).forEach((key, value) {
+      result[key] = value.sign;
+    });
+
+    return SparesTensor<num>(
+        result, shape, (sparesValue as num).sign, memoryOrder);
+  }
+
+  @override
+  SparesTensor<num> sqrt() {
+    final Map<int, num> result = {};
+    (_value as Map<int, num>).forEach((key, value) {
+      result[key] = math.sqrt(value);
+    });
+
+    return SparesTensor<num>(
+        result, shape, math.sqrt(sparesValue as num), memoryOrder);
+  }
+
+  @override
+  SparesTensor<T> swapAxis(int a, int b) {
+    return SparesTensor<T>(_value, shape.swap(a, b), sparesValue, memoryOrder);
+  }
+
+  @override
+  T getElementByAxis(int index, int axis) {
+    // TODO: implement getElementByAxis
+    throw UnimplementedError();
+  }
 }

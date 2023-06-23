@@ -181,4 +181,18 @@ class Shape {
       dimCount: dimCount,
     );
   }
+
+  Shape swap(int a, int b) {
+    if (a > length || b > length) {
+      throw Exception();
+    }
+    List<int> newShape = List.from(shape);
+    final first = newShape[a];
+
+    final second = newShape[b];
+    newShape[a] = second;
+    newShape[b] = first;
+
+    return Shape(shape: newShape, size: size, dimCount: dimCount);
+  }
 }

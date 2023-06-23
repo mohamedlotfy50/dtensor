@@ -88,4 +88,41 @@ class ScalarTensor<T extends Object> extends Tensor<T> {
   ScalarTensor<num> std() {
     return ScalarTensor<num>(value);
   }
+
+  @override
+  List<T> getAxisElements(int axis) {
+    // TODO: implement getAxisElements
+    throw UnimplementedError();
+  }
+
+  @override
+  DenseTensor<T> where(bool Function(T) condition, T Function(T) operation) {
+    throw Exception();
+  }
+
+  @override
+  ScalarTensor<num> log() {
+    return ScalarTensor<num>(math.log(tensor.first as num));
+  }
+
+  @override
+  ScalarTensor<num> sign() {
+    return ScalarTensor<num>((tensor.first as num).sign);
+  }
+
+  @override
+  ScalarTensor<num> sqrt() {
+    return ScalarTensor<num>(math.sqrt(tensor.first as num));
+  }
+
+  @override
+  ScalarTensor<T> swapAxis(int a, int b) {
+    return ScalarTensor<T>(tensor.first);
+  }
+
+  @override
+  T getElementByAxis(int index, int axis) {
+    // TODO: implement getElementByAxis
+    throw UnimplementedError();
+  }
 }

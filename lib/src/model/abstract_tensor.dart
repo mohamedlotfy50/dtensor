@@ -1,7 +1,7 @@
 import 'package:dtensor/src/helper/helper.dart';
 import 'package:dtensor/src/helper/operator_helper.dart';
 import 'package:dtensor/src/model/shape.dart';
-
+import 'dart:math' as math;
 import '../core/memory_order.dart';
 part './dense_tensor.dart';
 part './ragged_tensor.dart';
@@ -38,7 +38,7 @@ abstract class Tensor<T> {
 
   T getRowElementByOrder(int index);
   T getColumnElementByOrder(int row);
-  List<T> getAxisElements(int axis, {int? length});
+  T getElementByAxis(int index, int axis);
 
   E get<E extends Object>(List<int> index);
   Tensor<num> max();
@@ -48,4 +48,10 @@ abstract class Tensor<T> {
   Tensor<num> average();
   Tensor<num> std();
   bool contains(T value);
+
+  Tensor<T> where(bool Function(T) condition, T Function(T) operation);
+  Tensor<num> log();
+  Tensor<num> sqrt();
+  Tensor<num> sign();
+  Tensor<T> swapAxis(int a, int b);
 }

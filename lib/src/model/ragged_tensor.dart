@@ -133,4 +133,63 @@ class RaggedTensor<T extends Object> extends Tensor<T> {
     // TODO: implement std
     throw UnimplementedError();
   }
+
+  @override
+  List<T> getAxisElements(int axis) {
+    // TODO: implement getAxisElements
+    throw UnimplementedError();
+  }
+
+  @override
+  RaggedTensor<T> where(bool Function(T) condition, T Function(T) operation) {
+    List<T> result = [];
+
+    for (T element in tensor) {
+      if (condition(element)) {
+        result.add(operation(element));
+      } else {
+        result.add(element);
+      }
+    }
+
+    return RaggedTensor<T>(result, shape, memoryOrder);
+  }
+
+  @override
+  RaggedTensor<num> log() {
+    List<num> result = [];
+    for (num element in tensor as List<num>) {
+      result.add(math.log(element));
+    }
+    return RaggedTensor<num>(result, shape, memoryOrder);
+  }
+
+  @override
+  RaggedTensor<num> sign() {
+    List<num> result = [];
+    for (num element in tensor as List<num>) {
+      result.add(element.sign);
+    }
+    return RaggedTensor<num>(result, shape, memoryOrder);
+  }
+
+  @override
+  RaggedTensor<num> sqrt() {
+    List<num> result = [];
+    for (num element in tensor as List<num>) {
+      result.add(math.sqrt(element));
+    }
+    return RaggedTensor<num>(result, shape, memoryOrder);
+  }
+
+  @override
+  RaggedTensor<T> swapAxis(int a, int b) {
+    return RaggedTensor<T>(tensor, shape.swap(a, b), memoryOrder);
+  }
+
+  @override
+  T getElementByAxis(int index, int axis) {
+    // TODO: implement getElementByAxis
+    throw UnimplementedError();
+  }
 }
