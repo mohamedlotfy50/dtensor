@@ -9,6 +9,7 @@ import '../../helper/helper.dart';
 import '../../service/service.dart';
 part '../../extension/src/bool_dtensor.dart';
 part '../../extension/src/num_dtensor.dart';
+part './dtensor_iterator.dart';
 
 class DTensor<T extends Object> extends Iterable<DTensor<T>> {
   DTensor._(this._tensor);
@@ -20,6 +21,13 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
   dynamic get value => _tensor.value;
   @override
   Type get runtimeType => _tensor.runtimeType;
+  @override
+  String toString() {
+    return _tensor.toString();
+  }
+
+  @override
+  Iterator<DTensor<T>> get iterator => _DtensorIterator(_tensor);
 
   DTensor<T> transpose() {
     return DTensor<T>._(_tensor.transpose());
@@ -40,7 +48,7 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
 
   factory DTensor.load(File file) {
     TransitionTensor<T> transitionTensor =
-        TransitionTensor.fromMap(TensorIO.load<T>(file));
+        TransitionTensor<T>.fromMap(TensorIO.load<T>(file));
     return DTensor<T>._(transitionTensor.toTensor());
   }
 
@@ -90,18 +98,6 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
     throw Exception();
   }
 
-  static DTensor<num> sign(DTensor<num> tensor) {
-    return DTensor<num>._(tensor._tensor.sign());
-  }
-
-  static DTensor<num> log(DTensor<num> tensor) {
-    return DTensor<num>._(tensor._tensor.log());
-  }
-
-  static DTensor<num> sqrt(DTensor<num> tensor) {
-    return DTensor<num>._(tensor._tensor.sqrt());
-  }
-
   static DTensor<num> argMax(DTensor<num> tensor) {
     throw Exception();
   }
@@ -118,9 +114,9 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
     throw Exception();
   }
 
-  static DTensor<num> sum(DTensor<num> tensor, {int axis = 0}) {
-    return DTensor<num>._(tensor._tensor.sum());
-  }
+  // static DTensor<num> sum(DTensor<num> tensor, {int axis = 0}) {
+  //   return DTensor<num>._(tensor._tensor.sum());
+  // }
 
   DTensor<T> swapAxis(int axis1, int axis2) {
     if (_tensor is! HomogeneousTensor) {
@@ -131,39 +127,88 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
         (_tensor as HomogeneousTensor<T>).swapAxis(axis1, axis2));
   }
 
-  @override
-  Iterator<DTensor<T>> get iterator => _DtensorIterator(_tensor);
-  @override
-  String toString() {
-    return _tensor.toString();
+  DTensor<num> dot(DTensor<num> other) {
+    return DTensor<num>._((_tensor as HomogeneousTensor<num>)
+        .dot(other._tensor as HomogeneousTensor<num>));
   }
-}
 
-class _DtensorIterator<T extends Object> extends Iterator<DTensor<T>> {
-  final BaseTensor<T> _tensor;
+  DTensor<num> matMult(DTensor<num> other) {
+    return DTensor<num>._((_tensor as HomogeneousTensor<num>)
+        .matMult(other._tensor as HomogeneousTensor<num>));
+  }
 
-  int _index = 0;
+  static DTensor<num> exp(DTensor<num> inputTensor) {
+    return DTensor<num>._(inputTensor._tensor.exp());
+  }
 
-  _DtensorIterator(this._tensor);
+  static DTensor<num> pow(DTensor<num> inputTensor, num exponent) {
+    return DTensor<num>._(inputTensor._tensor.pow(exponent));
+  }
 
-  @override
-  DTensor<T> get current {
-    if (_tensor is ScalarTensor<T>) {
+  static DTensor<num> sqrt(DTensor<num> inputTensor) {
+    return DTensor._(inputTensor._tensor.sqrt());
+  }
+
+  static DTensor<num> sign(DTensor<num> inputTensor) {
+    return DTensor._(inputTensor._tensor.sign());
+  }
+
+  static DTensor<num> log(DTensor<num> inputTensor) {
+    return DTensor._(inputTensor._tensor.log());
+  }
+
+  static DTensor<num> max(DTensor<num> inputTensor,
+      {int? axis, bool keepDims = false}) {
+    if (inputTensor._tensor is! HomogeneousTensor<num>) {
       throw Exception();
-    } else if (_tensor.shape.length == 1) {
-      return DTensor<T>._(ScalarTensor<T>(
-        _tensor.rowOrderIndexing(_index),
-      ));
     }
-    return DTensor<T>._(
-      _tensor.axisRowElements(_index, 0),
-    );
+    return DTensor<num>._((inputTensor._tensor as HomogeneousTensor<num>)
+        .max(axis: axis, keepDims: keepDims));
   }
 
-  @override
-  bool moveNext() {
-    _index++;
+  static DTensor<num> min(DTensor<num> inputTensor,
+      {int? axis, bool keepDims = false}) {
+    if (inputTensor._tensor is! HomogeneousTensor<num>) {
+      throw Exception();
+    }
+    return DTensor<num>._((inputTensor._tensor as HomogeneousTensor<num>)
+        .min(axis: axis, keepDims: keepDims));
+  }
 
-    return _index < _tensor.shape.first;
+  static DTensor<num> sum(DTensor<num> inputTensor,
+      {int? axis, bool keepDims = false}) {
+    if (inputTensor._tensor is! HomogeneousTensor<num>) {
+      throw Exception();
+    }
+    return DTensor<num>._((inputTensor._tensor as HomogeneousTensor<num>)
+        .sum(axis: axis, keepDims: keepDims));
+  }
+
+  static DTensor<num> mean(DTensor<num> inputTensor,
+      {int? axis, bool keepDims = false}) {
+    if (inputTensor._tensor is! HomogeneousTensor<num>) {
+      throw Exception();
+    }
+    return DTensor<num>._((inputTensor._tensor as HomogeneousTensor<num>)
+        .mean(axis: axis, keepDims: keepDims));
+  }
+
+  static DTensor<I> mode<I extends Object>(DTensor<I> inputTensor,
+      {int? axis, bool keepDims = false}) {
+    if (inputTensor._tensor is! HomogeneousTensor<I>) {
+      throw Exception();
+    }
+    return DTensor<I>._((inputTensor._tensor as HomogeneousTensor<I>)
+        .mode(axis: axis, keepDims: keepDims));
+  }
+
+  static DTensor<num> median(DTensor<num> inputTensor,
+      {int? axis, bool keepDims = false}) {
+    if (inputTensor._tensor is! HomogeneousTensor<num>) {
+      throw Exception();
+    }
+
+    return DTensor<num>._((inputTensor._tensor as HomogeneousTensor<num>)
+        .median(axis: axis, keepDims: keepDims));
   }
 }

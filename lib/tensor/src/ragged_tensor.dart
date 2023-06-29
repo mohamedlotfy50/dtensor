@@ -1,3 +1,5 @@
+import 'package:dtensor/tensor/src/dense_tensor.dart';
+
 import '../../const/memory_order.dart';
 import '../../model/model.dart';
 
@@ -103,5 +105,11 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
   BaseTensor<T> axisRowElements(int index, int axis) {
     // TODO: implement axisRowElements
     throw UnimplementedError();
+  }
+
+  @override
+  DenseTensor<T> flatten() {
+    return DenseTensor<T>(
+        tensor, Shape(shape: [shape.size], size: shape.size), memoryOrder);
   }
 }

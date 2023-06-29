@@ -1,7 +1,7 @@
 part of '../../model/src/homogeneous_tensor.dart';
 
 extension NumHomogeneousTensor on HomogeneousTensor<num> {
-  HomogeneousTensor<num> add(HomogeneousTensor<num> other) {
+  HomogeneousTensor<num> homogeneousAdd(HomogeneousTensor<num> other) {
     final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
     if (resultShape == null) {
       throw Exception();
@@ -13,8 +13,8 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     OperatorHelper<num> operatorHelper = OperatorHelper();
     int i = 0;
     while (i < shape.size || i < other.shape.size) {
-      num value = rowOrderIndexing(i % shape.size) +
-          other.rowOrderIndexing(i % other.shape.size);
+      num value = rowOrderIndexing(i % shape.length) +
+          other.rowOrderIndexing(i % other.shape.length);
 
       operatorHelper.addResult(value);
       i += 1;
@@ -22,7 +22,7 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
-  HomogeneousTensor<num> subtract(HomogeneousTensor<num> other) {
+  HomogeneousTensor<num> homogeneousSubtract(HomogeneousTensor<num> other) {
     final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
     if (resultShape == null) {
       throw Exception();
@@ -34,8 +34,8 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     OperatorHelper<num> operatorHelper = OperatorHelper();
     int i = 0;
     while (i < shape.size || i < other.shape.size) {
-      num value = rowOrderIndexing(i % shape.size) -
-          other.rowOrderIndexing(i % other.shape.size);
+      num value = rowOrderIndexing(i % shape.length) -
+          other.rowOrderIndexing(i % other.shape.length);
 
       operatorHelper.addResult(value);
       i += 1;
@@ -43,7 +43,7 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
-  HomogeneousTensor<num> multiply(HomogeneousTensor<num> other) {
+  HomogeneousTensor<num> homogeneousMultiply(HomogeneousTensor<num> other) {
     final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
     if (resultShape == null) {
       throw Exception();
@@ -55,8 +55,8 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     OperatorHelper<num> operatorHelper = OperatorHelper();
     int i = 0;
     while (i < shape.size || i < other.shape.size) {
-      num value = rowOrderIndexing(i % shape.size) *
-          other.rowOrderIndexing(i % other.shape.size);
+      num value = rowOrderIndexing(i % shape.length) *
+          other.rowOrderIndexing(i % other.shape.length);
 
       operatorHelper.addResult(value);
       i += 1;
@@ -64,7 +64,7 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
-  HomogeneousTensor<num> divid(HomogeneousTensor<num> other) {
+  HomogeneousTensor<num> homogeneousDivid(HomogeneousTensor<num> other) {
     final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
     if (resultShape == null) {
       throw Exception();
@@ -76,8 +76,8 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     OperatorHelper<num> operatorHelper = OperatorHelper();
     int i = 0;
     while (i < shape.size || i < other.shape.size) {
-      num value = rowOrderIndexing(i % shape.size) /
-          other.rowOrderIndexing(i % other.shape.size);
+      num value = rowOrderIndexing(i % shape.length) /
+          other.rowOrderIndexing(i % other.shape.length);
 
       operatorHelper.addResult(value);
       i += 1;
@@ -105,9 +105,6 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
 
   HomogeneousTensor<num> max({int? axis, bool keepDims = false}) {
     if (axis == null) {
-      if (this is SparesTensor<num>) {
-        return ScalarTensor<num>((this as SparesTensor<num>).sparesValue);
-      }
       num? maxValue;
       for (num element in tensor) {
         if (maxValue == null || element > maxValue) {

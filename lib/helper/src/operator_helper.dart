@@ -33,18 +33,20 @@ class OperatorHelper<T extends Object> {
     _result.add(value);
   }
 
-  HomogeneousTensor<T> resultHomogeneousTensor(Shape resultShape) {
+  HomogeneousTensor<T> resultHomogeneousTensor(Shape resultShape,
+      {MemoryOrder? memoryOrder}) {
     if (resultShape.isScalar && _result.length == 1) {
       return ScalarTensor<T>(_result.first);
     } else if (_isSparse) {
       return SparesTensor<T>(
-          _mapValue, resultShape, _sparseValue!, MemoryOrder.c);
+          _mapValue, resultShape, _sparseValue!, memoryOrder ?? MemoryOrder.c);
     } else {
-      return DenseTensor<T>(_result, resultShape, MemoryOrder.c);
+      return DenseTensor<T>(_result, resultShape, memoryOrder ?? MemoryOrder.c);
     }
   }
 
-  RaggedTensor<T> resultRaggedTensor(Shape resultShape) {
-    return RaggedTensor(_result, resultShape, MemoryOrder.c);
+  RaggedTensor<T> resultRaggedTensor(Shape resultShape,
+      {MemoryOrder? memoryOrder}) {
+    return RaggedTensor(_result, resultShape, memoryOrder ?? MemoryOrder.c);
   }
 }

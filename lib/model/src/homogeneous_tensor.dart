@@ -58,4 +58,65 @@ abstract class HomogeneousTensor<T extends Object> extends BaseTensor<T> {
     }
     return DenseTensor<T>(result, shape.removeDim(axis), MemoryOrder.c);
   }
+
+  BaseTensor<T> mode({int? axis, bool keepDims = false}) {
+    if (axis == null) {
+      if (this is SparesTensor<num>) {
+        return ScalarTensor<T>((this as SparesTensor<T>).sparesValue);
+      }
+      Map<T, int> histogram = {};
+      int maxCount = 0;
+      T? modeValue;
+      for (T element in tensor) {
+        if (histogram[element] == null) {
+          histogram[element] = 1;
+        }
+        histogram[element] = histogram[element]! + 1;
+        if (modeValue == null || histogram[element]! > maxCount) {
+          modeValue = element;
+          maxCount = histogram[element]!;
+        }
+      }
+
+      return ScalarTensor<T>(modeValue!);
+    } else if (axis >= 0 && axis < shape.length) {
+      late final Shape resultShape;
+      if (keepDims) {
+        resultShape = shape.replaceDim(axis, 1);
+      } else {
+        resultShape = shape.removeDim(axis);
+      }
+      OperatorHelper<T> operatorHelper = OperatorHelper<T>();
+
+      int externlLoop = shape.shape.multiply(exclude: axis);
+      int innerDimensions = shape.shape.multiply(start: axis + 1);
+      int jump = shape.shape.multiply(start: axis);
+      Map<T, int> histogram = {};
+      int maxCount = 0;
+      T? modeValue;
+      for (int i = 0; i < externlLoop; i++) {
+        for (int y = 0; y < shape[axis]; y++) {
+          int factor = i ~/ innerDimensions;
+          int location = i % innerDimensions;
+          int pointer = location + factor * jump;
+
+          T val = rowOrderIndexing(pointer + (y * innerDimensions));
+          if (histogram[val] == null) {
+            histogram[val] = 1;
+          }
+          histogram[val] = histogram[val]! + 1;
+          if (modeValue == null || histogram[val]! > maxCount) {
+            modeValue = val;
+            maxCount = histogram[val]!;
+          }
+        }
+
+        operatorHelper.addResult(modeValue!);
+      }
+
+      return operatorHelper.resultHomogeneousTensor(resultShape);
+    } else {
+      throw Exception();
+    }
+  }
 }

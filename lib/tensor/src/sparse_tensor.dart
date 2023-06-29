@@ -118,11 +118,6 @@ class SparesTensor<T extends Object> extends HomogeneousTensor<T> {
   }
 
   @override
-  ScalarTensor<T> mode() {
-    return ScalarTensor<T>(sparesValue);
-  }
-
-  @override
   bool contains(T value) {
     for (T element in _value.values) {
       if (value == element) {
