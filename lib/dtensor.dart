@@ -3,4 +3,5 @@
 /// More dartdocs go here.
 library dtensor;
 
-export 'src/core/core.dart';
+export './tensor/src/dtensor.dart';
+export './const/memory_order.dart';

@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:dtensor/dtensor.dart';
-import 'package:dtensor/src/model/abstract_tensor.dart';
-import 'package:dtensor/src/model/shape.dart';
+import 'package:dtensor/tensor/src/ragged_tensor.dart';
 
 void main() {
   final c = [
@@ -40,5 +37,7 @@ void main() {
 
   final t1 = DTensor<int>.tensor(c, memoryOrder: MemoryOrder.c);
   // dot(row_test_list, row_test_list);
-  print(t1.sum(axis: 0).value);
+  // print(t1.sum(axis: 0).value);
+
+  print(DTensor<bool>.tensor(true) & DTensor<bool>.tensor(false));
 }
