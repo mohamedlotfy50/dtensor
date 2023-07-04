@@ -1,4 +1,4 @@
-import '../../const/memory_order.dart';
+import '../../const/tensor_order.dart';
 import '../../model/model.dart';
 import '../../tensor/tensor.dart';
 import 'tensor_extractor_helper.dart';
@@ -8,23 +8,19 @@ class TensorHelper {
 
   static BaseTensor<T> autoDetectType<T extends Object>({
     required dynamic value,
-    required MemoryOrder memoryOrder,
+    required TensorOrder tensorOrder,
   }) {
-    MemoryOrder tensorMemoryOrder;
     if (value is! List) {
       return ScalarTensor<T>(value);
     }
     final TensorExtractorHelper<T> tensorExtractorHelper =
         TensorExtractorHelper<T>();
 
-    if (memoryOrder == MemoryOrder.f &&
+    if (tensorOrder == TensorOrder.f &&
         value.isNotEmpty &&
         value.first is List) {
-      tensorMemoryOrder = MemoryOrder.f;
       _columnMajorOrder<T>(value, tensorExtractorHelper);
     } else {
-      tensorMemoryOrder = MemoryOrder.c;
-
       _rowMajorOrder<T>(value, tensorExtractorHelper);
     }
     if (tensorExtractorHelper.isRagged) {
@@ -34,7 +30,7 @@ class TensorHelper {
             shape: tensorExtractorHelper.shape,
             size: tensorExtractorHelper.size,
             dimCount: tensorExtractorHelper.dimCount),
-        tensorMemoryOrder,
+        tensorOrder,
       );
     } else if (tensorExtractorHelper.isSparse) {
       return SparesTensor(
@@ -44,7 +40,7 @@ class TensorHelper {
             size: tensorExtractorHelper.size,
             dimCount: []),
         tensorExtractorHelper.sparseValue!,
-        tensorMemoryOrder,
+        tensorOrder,
       );
     } else {
       return DenseTensor(
@@ -54,7 +50,7 @@ class TensorHelper {
           size: tensorExtractorHelper.size,
           dimCount: [],
         ),
-        tensorMemoryOrder,
+        tensorOrder,
       );
     }
   }

@@ -97,7 +97,7 @@ class Shape {
       List<int> firstShape = List<int>.from(first.shape);
       List<int> secondShape = List<int>.from(second.shape);
       firstShape.removeLast();
-      secondShape.removeAt(second.shape.length - 2);
+      secondShape.removeLast();
       List<int> resultShape = [...firstShape, ...secondShape];
 
       return Shape(

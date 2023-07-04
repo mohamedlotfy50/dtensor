@@ -4,4 +4,4 @@
 library dtensor;
 
 export './tensor/src/dtensor.dart';
-export './const/memory_order.dart';
+export 'const/tensor_order.dart';

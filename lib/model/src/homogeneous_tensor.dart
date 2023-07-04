@@ -1,8 +1,9 @@
 import 'package:dtensor/util/src/list_extension.dart';
-
-import '../../../const/memory_order.dart';
+import 'dart:math' as math;
+import '../../const/tensor_order.dart';
 import '../../helper/src/operator_helper.dart';
 import '../../tensor/tensor.dart';
+import '../../util/src/quick_sort.dart';
 import 'base_tensor.dart';
 import 'shape.dart';
 import '../../util/util.dart';
@@ -14,35 +15,23 @@ abstract class HomogeneousTensor<T extends Object> extends BaseTensor<T> {
   BaseTensor<T> reshape(Shape s);
   BaseTensor<T> flatten();
 
-  HomogeneousTensor<T> swapAxis(int a, int b);
   @override
-  DenseTensor<int> argSort() {
-    List<int> indices = List<int>.generate(shape.size, (index) => index);
-
-    indices.sort((a, b) => (tensor[a] as num).compareTo(tensor[b] as num));
-
-    return DenseTensor<int>(indices, shape, memoryOrder);
+  E getElementByTensor<E extends Object>(BaseTensor<int> index) {
+    throw Exception();
   }
+
+  HomogeneousTensor<T> swapAxis(int a, int b);
 
   @override
   T rowOrderIndexing(int index) {
-    if (memoryOrder == MemoryOrder.c) {
-      return tensor[index];
-    }
-    int currentIndex =
-        (index % shape.last) * shape[shape.length - 2] + (index ~/ shape.last);
+    int currentIndex = memoryOrder.rowOrderIndexing(index, shape);
     return tensor[currentIndex];
   }
 
   @override
   T columnOrderIndexing(int index) {
-    if (memoryOrder == MemoryOrder.c) {
-      int currentIndex = (index % shape[shape.length - 2]) * shape.last +
-          (index ~/ shape[shape.length - 2]);
-      return tensor[currentIndex];
-    }
-
-    return tensor[index];
+    int currentIndex = memoryOrder.columnOrderIndexing(index, shape);
+    return tensor[currentIndex];
   }
 
   @override
@@ -56,7 +45,7 @@ abstract class HomogeneousTensor<T extends Object> extends BaseTensor<T> {
     for (int i = 0; i < count; i++) {
       result.add(rowOrderIndexing(index * count + i));
     }
-    return DenseTensor<T>(result, shape.removeDim(axis), MemoryOrder.c);
+    return DenseTensor<T>(result, shape.removeDim(axis), TensorOrder.c);
   }
 
   BaseTensor<T> mode({int? axis, bool keepDims = false}) {

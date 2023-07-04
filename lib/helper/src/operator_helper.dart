@@ -1,4 +1,4 @@
-import '../../const/memory_order.dart';
+import '../../const/tensor_order.dart';
 import '../../model/model.dart';
 import '../../tensor/tensor.dart';
 
@@ -33,20 +33,26 @@ class OperatorHelper<T extends Object> {
     _result.add(value);
   }
 
+  void addResultList(List<T> valueList) {
+    for (T value in valueList) {
+      addResult(value);
+    }
+  }
+
   HomogeneousTensor<T> resultHomogeneousTensor(Shape resultShape,
-      {MemoryOrder? memoryOrder}) {
+      {TensorOrder? memoryOrder}) {
     if (resultShape.isScalar && _result.length == 1) {
       return ScalarTensor<T>(_result.first);
     } else if (_isSparse) {
       return SparesTensor<T>(
-          _mapValue, resultShape, _sparseValue!, memoryOrder ?? MemoryOrder.c);
+          _mapValue, resultShape, _sparseValue!, memoryOrder ?? TensorOrder.c);
     } else {
-      return DenseTensor<T>(_result, resultShape, memoryOrder ?? MemoryOrder.c);
+      return DenseTensor<T>(_result, resultShape, memoryOrder ?? TensorOrder.c);
     }
   }
 
   RaggedTensor<T> resultRaggedTensor(Shape resultShape,
-      {MemoryOrder? memoryOrder}) {
-    return RaggedTensor(_result, resultShape, memoryOrder ?? MemoryOrder.c);
+      {TensorOrder? memoryOrder}) {
+    return RaggedTensor(_result, resultShape, memoryOrder ?? TensorOrder.c);
   }
 }

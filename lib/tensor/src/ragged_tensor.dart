@@ -1,6 +1,8 @@
+import 'package:dtensor/const/c_memory_order.dart';
+import 'package:dtensor/const/fortran_memory_order.dart';
 import 'package:dtensor/tensor/src/dense_tensor.dart';
 
-import '../../const/memory_order.dart';
+import '../../const/tensor_order.dart';
 import '../../model/model.dart';
 
 class RaggedTensor<T extends Object> extends BaseTensor<T> {
@@ -8,7 +10,14 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
   final Shape shape;
   final MemoryOrder memoryOrder;
 
-  RaggedTensor(this.tensor, this.shape, this.memoryOrder);
+  RaggedTensor._(this.tensor, this.shape, this.memoryOrder);
+  factory RaggedTensor(
+      List<T> flatTensor, Shape shape, TensorOrder tensorOrder) {
+    if (tensorOrder == TensorOrder.c) {
+      return RaggedTensor._(flatTensor, shape, CMemoryOrder());
+    }
+    return RaggedTensor._(flatTensor, shape, FortranMemoryOrder());
+  }
 
   @override
   E getElement<E extends Object>(List<int> index) {
@@ -17,12 +26,10 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
 
   @override
   dynamic get value {
-    switch (memoryOrder) {
-      case MemoryOrder.c:
-        return _rowMajorReformTensor();
-      case MemoryOrder.f:
-        return _columnMajorReformTensor();
+    if (memoryOrder is CMemoryOrder) {
+      return _rowMajorReformTensor();
     }
+    return _columnMajorReformTensor();
   }
 
   dynamic _rowMajorReformTensor() {
@@ -65,7 +72,8 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
 
   @override
   RaggedTensor<T> transpose() {
-    return RaggedTensor<T>(tensor, shape.transpose(), memoryOrder.transpose());
+    return RaggedTensor<T>._(
+        tensor, shape.transpose(), memoryOrder.transpose());
   }
 
   @override
@@ -80,7 +88,7 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
       }
     }
 
-    return RaggedTensor<T>(result, shape, memoryOrder);
+    return RaggedTensor<T>._(result, shape, memoryOrder);
   }
 
   @override
@@ -109,7 +117,13 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
 
   @override
   DenseTensor<T> flatten() {
-    return DenseTensor<T>(
-        tensor, Shape(shape: [shape.size], size: shape.size), memoryOrder);
+    return DenseTensor<T>(tensor, Shape(shape: [shape.size], size: shape.size),
+        memoryOrder.order);
+  }
+
+  @override
+  getElementByTensor<E extends Object>(BaseTensor<int> index) {
+    // TODO: implement getElementByTensor
+    throw UnimplementedError();
   }
 }

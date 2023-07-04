@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:dtensor/util/src/list_extension.dart';
 
-import '../../../const/memory_order.dart';
+import '../../const/tensor_order.dart';
 import '../../tensor/tensor.dart';
 import './shape.dart';
 
@@ -11,7 +11,7 @@ class TransitionTensor<T extends Object> {
   final Endian byteOrder;
   final int itemSize;
   final Type dataType;
-  final MemoryOrder memoryOrder;
+  final TensorOrder memoryOrder;
   final Shape shape;
   final List<T> data;
 
@@ -28,7 +28,7 @@ class TransitionTensor<T extends Object> {
     return TransitionTensor<T>(
       byteOrder: map['byteOrder'],
       itemSize: map['itemSize'],
-      memoryOrder: map['isFortran'] ? MemoryOrder.f : MemoryOrder.c,
+      memoryOrder: map['isFortran'] ? TensorOrder.f : TensorOrder.c,
       shape: Shape(
         dimCount: [],
         shape: map['shape'],
@@ -44,7 +44,7 @@ class TransitionTensor<T extends Object> {
       byteOrder: Endian.big,
       itemSize: tensor.tensor.length,
       dataType: T,
-      memoryOrder: tensor.memoryOrder,
+      memoryOrder: tensor.memoryOrder.order,
       shape: tensor.shape,
       data: tensor.tensor,
     );

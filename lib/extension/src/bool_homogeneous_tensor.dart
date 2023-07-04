@@ -1,7 +1,7 @@
 part of '../../model/src/homogeneous_tensor.dart';
 
 extension BoolHomogeneousTensorExtension on HomogeneousTensor<bool> {
-  BaseTensor<bool> homogeneousAnd(BaseTensor<bool> other) {
+  HomogeneousTensor<bool> homogeneousAnd(HomogeneousTensor<bool> other) {
     if (tensor is ScalarTensor<bool> && other.tensor is ScalarTensor<bool>) {
       return ScalarTensor<bool>(tensor.first & other.tensor.first);
     }
@@ -22,7 +22,7 @@ extension BoolHomogeneousTensorExtension on HomogeneousTensor<bool> {
     return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
-  BaseTensor<bool> homogeneousOr(BaseTensor<bool> other) {
+  HomogeneousTensor<bool> homogeneousOr(HomogeneousTensor<bool> other) {
     if (tensor is ScalarTensor<bool> && other.tensor is ScalarTensor<bool>) {
       return ScalarTensor<bool>(tensor.first | other.tensor.first);
     }
@@ -43,7 +43,7 @@ extension BoolHomogeneousTensorExtension on HomogeneousTensor<bool> {
     return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
-  BaseTensor<bool> homogeneousNot() {
+  HomogeneousTensor<bool> homogeneousNot() {
     if (this is ScalarTensor<bool>) {
       return ScalarTensor<bool>(!(tensor.first));
     }

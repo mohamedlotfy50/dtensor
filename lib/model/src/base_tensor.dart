@@ -1,8 +1,9 @@
 import 'package:dtensor/util/util.dart';
 
-import '../../../const/memory_order.dart';
+import '../../const/tensor_order.dart';
 import '../../helper/helper.dart';
 import '../../tensor/tensor.dart';
+import 'memory_order.dart';
 import 'shape.dart';
 import 'homogeneous_tensor.dart';
 import 'dart:math' as math;
@@ -13,6 +14,7 @@ abstract class BaseTensor<T extends Object> {
   List<T> get tensor;
 
   MemoryOrder get memoryOrder;
+
   T operator [](int index) {
     if (index > tensor.length) {
       throw Exception();
@@ -29,6 +31,7 @@ abstract class BaseTensor<T extends Object> {
   T rowOrderIndexing(int index);
   T columnOrderIndexing(int row);
   E getElement<E extends Object>(List<int> index);
+  E getElementByTensor<E extends Object>(BaseTensor<int> index);
 
   BaseTensor<T> transpose();
 
@@ -36,12 +39,18 @@ abstract class BaseTensor<T extends Object> {
     return tensor.contains(value);
   }
 
-  BaseTensor<int> argSort();
   BaseTensor<T> where(bool Function(T) condition, T Function(T) operation);
 
   BaseTensor<T> axisRowElements(int index, int axis);
   @override
   String toString() {
     return '${super.runtimeType}($value)';
+  }
+
+  BaseTensor<T> mode({int? axis, bool keepDims = false}) {
+    if (this is! HomogeneousTensor<T>) {
+      throw Exception();
+    }
+    return (this as HomogeneousTensor<T>).mode();
   }
 }

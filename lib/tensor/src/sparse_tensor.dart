@@ -1,4 +1,7 @@
-import '../../const/memory_order.dart';
+import 'package:dtensor/const/fortran_memory_order.dart';
+
+import '../../const/c_memory_order.dart';
+import '../../const/tensor_order.dart';
 import '../../model/model.dart';
 import 'scalar_tensor.dart';
 
@@ -27,31 +30,36 @@ class SparesTensor<T extends Object> extends HomogeneousTensor<T> {
     return listValues;
   }
 
-  SparesTensor(this._value, this.shape, this.sparesValue, this.memoryOrder);
+  SparesTensor._(this._value, this.shape, this.sparesValue, this.memoryOrder);
+  factory SparesTensor(
+      Map<int, T> mapValue, Shape shape, T sparse, TensorOrder tensorOrder) {
+    if (tensorOrder == TensorOrder.c) {
+      return SparesTensor._(mapValue, shape, sparse, CMemoryOrder());
+    }
+    return SparesTensor._(mapValue, shape, sparse, FortranMemoryOrder());
+  }
 
   factory SparesTensor.zeros(Shape shape) {
     assert(T is! num);
-    return SparesTensor<T>({}, shape, 0 as T, MemoryOrder.c);
+    return SparesTensor<T>({}, shape, 0 as T, TensorOrder.c);
   }
 
   factory SparesTensor.ones(Shape shape) {
     assert(T is! num);
-    return SparesTensor<T>({}, shape, 1 as T, MemoryOrder.c);
+    return SparesTensor<T>({}, shape, 1 as T, TensorOrder.c);
   }
 
   @override
   SparesTensor<T> reshape(Shape s) {
-    return SparesTensor<T>(_value, s, sparesValue, memoryOrder);
+    return SparesTensor<T>(_value, s, sparesValue, memoryOrder.order);
   }
 
   @override
   dynamic get value {
-    switch (memoryOrder) {
-      case MemoryOrder.c:
-        return _rowMajorReformTensor();
-      case MemoryOrder.f:
-        return _columnMajorReformTensor();
+    if (memoryOrder is CMemoryOrder) {
+      return _rowMajorReformTensor();
     }
+    return _columnMajorReformTensor();
   }
 
   dynamic _rowMajorReformTensor() {
@@ -87,7 +95,7 @@ class SparesTensor<T extends Object> extends HomogeneousTensor<T> {
 
   @override
   SparesTensor<T> transpose() {
-    return SparesTensor<T>(
+    return SparesTensor<T>._(
       _value,
       shape.transpose(),
       sparesValue,
@@ -109,12 +117,13 @@ class SparesTensor<T extends Object> extends HomogeneousTensor<T> {
       }
     });
 
-    return SparesTensor<T>(result, shape, sparseResullt, memoryOrder);
+    return SparesTensor<T>._(result, shape, sparseResullt, memoryOrder);
   }
 
   @override
   SparesTensor<T> swapAxis(int a, int b) {
-    return SparesTensor<T>(_value, shape.swap(a, b), sparesValue, memoryOrder);
+    return SparesTensor<T>._(
+        _value, shape.swap(a, b), sparesValue, memoryOrder);
   }
 
   @override
@@ -130,7 +139,7 @@ class SparesTensor<T extends Object> extends HomogeneousTensor<T> {
 
   @override
   SparesTensor<T> flatten() {
-    return SparesTensor(
+    return SparesTensor._(
       _value,
       Shape(shape: [shape.size], size: shape.size),
       sparesValue,

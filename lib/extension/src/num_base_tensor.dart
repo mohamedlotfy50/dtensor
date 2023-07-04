@@ -8,9 +8,10 @@ extension NumBaseTensorExtension on BaseTensor<num> {
     }
     if (this is HomogeneousTensor<num>) {
       return operatorHelper.resultHomogeneousTensor(shape,
-          memoryOrder: memoryOrder);
+          memoryOrder: memoryOrder.order);
     }
-    return operatorHelper.resultRaggedTensor(shape, memoryOrder: memoryOrder);
+    return operatorHelper.resultRaggedTensor(shape,
+        memoryOrder: memoryOrder.order);
   }
 
   BaseTensor<num> exp() {
@@ -20,9 +21,10 @@ extension NumBaseTensorExtension on BaseTensor<num> {
     }
     if (this is HomogeneousTensor<num>) {
       return operatorHelper.resultHomogeneousTensor(shape,
-          memoryOrder: memoryOrder);
+          memoryOrder: memoryOrder.order);
     }
-    return operatorHelper.resultRaggedTensor(shape, memoryOrder: memoryOrder);
+    return operatorHelper.resultRaggedTensor(shape,
+        memoryOrder: memoryOrder.order);
   }
 
   BaseTensor<num> log() {
@@ -32,9 +34,10 @@ extension NumBaseTensorExtension on BaseTensor<num> {
     }
     if (this is HomogeneousTensor<num>) {
       return operatorHelper.resultHomogeneousTensor(shape,
-          memoryOrder: memoryOrder);
+          memoryOrder: memoryOrder.order);
     }
-    return operatorHelper.resultRaggedTensor(shape, memoryOrder: memoryOrder);
+    return operatorHelper.resultRaggedTensor(shape,
+        memoryOrder: memoryOrder.order);
   }
 
   BaseTensor<num> sign() {
@@ -44,9 +47,10 @@ extension NumBaseTensorExtension on BaseTensor<num> {
     }
     if (this is HomogeneousTensor<num>) {
       return operatorHelper.resultHomogeneousTensor(shape,
-          memoryOrder: memoryOrder);
+          memoryOrder: memoryOrder.order);
     }
-    return operatorHelper.resultRaggedTensor(shape, memoryOrder: memoryOrder);
+    return operatorHelper.resultRaggedTensor(shape,
+        memoryOrder: memoryOrder.order);
   }
 
   BaseTensor<num> sqrt() {
@@ -56,9 +60,10 @@ extension NumBaseTensorExtension on BaseTensor<num> {
     }
     if (this is HomogeneousTensor<num>) {
       return operatorHelper.resultHomogeneousTensor(shape,
-          memoryOrder: memoryOrder);
+          memoryOrder: memoryOrder.order);
     }
-    return operatorHelper.resultRaggedTensor(shape, memoryOrder: memoryOrder);
+    return operatorHelper.resultRaggedTensor(shape,
+        memoryOrder: memoryOrder.order);
   }
 
   BaseTensor<num> add(BaseTensor<num> other) {

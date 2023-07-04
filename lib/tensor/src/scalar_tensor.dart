@@ -1,9 +1,10 @@
-import '../../const/memory_order.dart';
+import 'package:dtensor/const/c_memory_order.dart';
+
 import '../../model/model.dart';
 
 class ScalarTensor<T extends Object> extends HomogeneousTensor<T> {
   final Shape shape = Shape(shape: [], size: 1);
-  final MemoryOrder memoryOrder = MemoryOrder.c;
+  final MemoryOrder memoryOrder = CMemoryOrder();
 
   final List<T> tensor;
 

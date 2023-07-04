@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show File, RandomAccessFile, FileMode;
 import 'dart:typed_data';
 
@@ -92,40 +93,28 @@ class NumpyIO<E> extends DtensorIOBase<E> {
   // {'descr': '<i4', 'fortran_order': False, 'shape': (), }      scalar
 
   static Map<String, dynamic> _numpyParser(String data) {
-    Map<String, dynamic> metaData = {};
-    metaData['shape'] = <int>[];
-
-    String modifiedString =
-        data.toLowerCase().replaceAll(RegExp('[{}\\s\']'), '');
-    RegExp pattern = RegExp(r'\((.*?)\)');
-    Match? match = pattern.firstMatch(modifiedString);
-
-    if (match == null) {
-      throw Exception();
-    }
-
-    String shapePattern = match.group(0)!;
-    String withNoShape = modifiedString.replaceAll(shapePattern, '');
-    List<String> keyValuePair = withNoShape.split(',');
-
-    for (int i = 0; i < shapePattern.length; i++) {
-      int? value = int.tryParse(shapePattern[i]);
-      if (value != null) {
-        (metaData['shape'] as List<int>).add(value);
+    final String lowerCase = data.toLowerCase();
+    final String modifiedString =
+        lowerCase.replaceAllMapped(RegExp(r"['()]"), (match) {
+      if (match.group(0) == "'") {
+        return '"';
+      } else {
+        return match.group(0) == "(" ? "[" : "]";
       }
-    }
-
-    for (String pair in keyValuePair) {
-      List<String> keyValue = pair.split(':');
-      if (keyValue.length == 2 && keyValue[1].isNotEmpty) {
-        if (keyValue[1] == 'true' || keyValue[1] == 'false') {
-          metaData[keyValue[0]] = keyValue[1] == 'true';
-        } else {
-          metaData[keyValue[0]] = keyValue[1];
-        }
+    });
+    late final String cleanMetaData;
+    int i = modifiedString.length - 1;
+    while (i >= 0) {
+      if (modifiedString[i] == ',') {
+        cleanMetaData =
+            modifiedString.substring(0, i) + modifiedString.substring(i + 1);
+        break;
+      } else if (modifiedString[i] == ']') {
+        break;
       }
+      i--;
     }
 
-    return metaData;
+    return json.decode(cleanMetaData);
   }
 }
