@@ -30,7 +30,7 @@ class Shape {
     return true;
   }
 
-  static Shape? tryProdcast(Shape firstShape, Shape secondShape) {
+  static Shape? tryBroadcast(Shape firstShape, Shape secondShape) {
     final Shape minShape;
     final Shape maxShape;
 
@@ -78,11 +78,7 @@ class Shape {
   }
 
   int operator [](int index) {
-    try {
-      return shape[index];
-    } catch (e) {
-      throw Exception();
-    }
+    return shape[index];
   }
 
   static Shape? dot(Shape first, Shape second) {

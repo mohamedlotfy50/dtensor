@@ -104,23 +104,6 @@ class SparesTensor<T extends Object> extends HomogeneousTensor<T> {
   }
 
   @override
-  SparesTensor<T> where(bool Function(T) condition, T Function(T) operation) {
-    Map<int, T> result = {};
-    T sparseResullt =
-        condition(sparesValue) ? operation(sparesValue) : sparesValue;
-
-    _value.forEach((key, value) {
-      if (condition(value)) {
-        result[key] = operation(value);
-      } else {
-        result[key] = value;
-      }
-    });
-
-    return SparesTensor<T>._(result, shape, sparseResullt, memoryOrder);
-  }
-
-  @override
   SparesTensor<T> swapAxis(int a, int b) {
     return SparesTensor<T>._(
         _value, shape.swap(a, b), sparesValue, memoryOrder);

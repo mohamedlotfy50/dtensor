@@ -1,39 +1,63 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# DTensor
+## Unleashing NumPy-like Power in Dart
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+`DTensor` is dart package Brings the  efficiency and expressiveness of numerical computation to Dart with DaBrain, a tensor-centric package inspired by NumPy.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-library-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
--->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- Tensor Variety: Work seamlessly with dense tensors, sparse tensors, ragged tensors, and scalars to suit diverse data structures and optimize memory usage.
+- Rich Operations: Explore a comprehensive set of operations, including:
+    - Logical operations on boolean tensors: `and`, `or`, `not`
+    - Arithmetic operations: `+`,` -`, `*`, `/`
+    - Dot product and matrix multiplications
+    - Sorting: `argsort`, `max`, `argmax`, `min`, `argmin`, `mean`, `transpose`, etc ..
+- Numpy supports: Support parsing saved `.npy` files directly to `DTensor` tensor. Enjoy a familiar syntax and paradigm for those coming from NumPy, easing the transition into Dart numerical computations.
 
-## Getting started
+## Basic Usage:
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+### Tensor creation
+For the tensor creation just use `DTensor.tensor` and it's automaticly detect tensor type from the inputed value
 
 ```dart
-const like = 'sample';
+  final scalar = DTensor<int>.tensor(2);
+  final dense = DTensor<double>.tensor([
+    [1.0, 2.5, 3, 4],
+    [5, 6, 7, 8]
+  ]);
+  final raged = DTensor<int>.tensor([
+    [1, 2, 3, 4],
+    [5, 6, 7]
+  ]);
+
+```
+**Note**: It's always best practice to define the tensor type.
+
+### Pre-defined Tensors
+Creating `zeros` or `one` tensors with speific shape 
+```dart
+ final ones = DTensor<int>.ones([9, 5, 7, 4]);
+ final zeros = DTensor<int>.zeros([9, 5, 4, 3]);
 ```
 
-## Additional information
+### Mathmatical operations
+Use matrix multiplications over ND tensor
+```dart 
+  final t1 = DTensor<int>.ones([9, 5, 7, 4]);
+  final t2 = DTensor<int>.zeros([9, 5, 4, 3]);
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+  final stopwatch = Stopwatch()..start();
+
+  DTensor.matMult(t1, t2);
+
+  final s = stopwatch.elapsed;
+
+  print('time taken  ${s}'); // time taken  0:00:00.207473
+```
+## Join the Community:
+Share your thoughts and contribute to DaBrain's development
+## License
+
+[GPLv3](licence.md)
+

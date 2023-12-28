@@ -2,9 +2,9 @@ part of '../../model/src/homogeneous_tensor.dart';
 
 extension NumHomogeneousTensor on HomogeneousTensor<num> {
   HomogeneousTensor<num> homogeneousAdd(HomogeneousTensor<num> other) {
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     if (this is ScalarTensor<num> && other is ScalarTensor<num>) {
@@ -23,9 +23,9 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
   }
 
   HomogeneousTensor<num> homogeneousSubtract(HomogeneousTensor<num> other) {
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     if (this is ScalarTensor<num> && other is ScalarTensor<num>) {
@@ -44,9 +44,9 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
   }
 
   HomogeneousTensor<num> homogeneousMultiply(HomogeneousTensor<num> other) {
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     if (this is ScalarTensor<num> && other is ScalarTensor<num>) {
@@ -65,9 +65,9 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
   }
 
   HomogeneousTensor<num> homogeneousDivid(HomogeneousTensor<num> other) {
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     if (this is ScalarTensor<num> && other is ScalarTensor<num>) {
@@ -94,7 +94,7 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     final Shape? resultShape = Shape.dot(this.shape, other.shape);
 
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
     OperatorHelper<num> operatorHelper = OperatorHelper<num>();
 
@@ -106,6 +106,7 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
     } else {
       externalLoops = shape.shape.multiply(end: shape.length - 1);
     }
+    final int last = shape.last;
 
     if (other.shape.length == 1) {
       internalLoop = 1;
@@ -113,13 +114,13 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
       internalLoop = other.shape.shape.multiply(exclude: shape.length - 2);
     }
     for (int dim = 0; dim < externalLoops; dim++) {
-      int startFirstMatrix = dim * shape.last;
+      int startFirstMatrix = dim * last;
 
       for (int col = 0; col < internalLoop; col++) {
         num total = 0;
-        int startSecondMatrix = col * shape.last;
+        int startSecondMatrix = col * last;
 
-        for (int i = 0; i < shape.last; i++) {
+        for (int i = 0; i < last; i++) {
           num r = rowOrderIndexing(startFirstMatrix + i);
           num c = other.columnOrderIndexing(startSecondMatrix + i);
           total += r * c;
@@ -128,17 +129,18 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         operatorHelper.addResult(total);
       }
     }
+
     return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<num> matMult(HomogeneousTensor<num> other) {
     if (this is ScalarTensor<num> || other is ScalarTensor<num>) {
-      throw Exception();
+      throw NotSupportedOperationType('matMult', this);
     }
     final Shape? resultShape = Shape.matMult(this.shape, other.shape);
 
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
     OperatorHelper<num> operatorHelper = OperatorHelper<num>();
 
@@ -186,37 +188,38 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         }
       }
       return ScalarTensor<num>(maxValue!);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        num? resultValue;
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          if (resultValue == null || val > resultValue) {
-            resultValue = val;
-          }
-        }
-        operatorHelper.addResult(resultValue!);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num? resultValue;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        if (resultValue == null || val > resultValue) {
+          resultValue = val;
+        }
+      }
+      operatorHelper.addResult(resultValue!);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<int> argMax({int? axis, bool keepDims = false}) {
@@ -230,39 +233,39 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         }
       }
       return ScalarTensor<int>(index!);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<int> operatorHelper = OperatorHelper<int>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        num? resultValue;
-        int? index;
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          if (resultValue == null || val > resultValue) {
-            resultValue = val;
-            index = i;
-          }
-        }
-        operatorHelper.addResult(index!);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<int> operatorHelper = OperatorHelper<int>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num? resultValue;
+      int? index;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        if (resultValue == null || val > resultValue) {
+          resultValue = val;
+          index = i;
+        }
+      }
+      operatorHelper.addResult(index!);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<num> min({int? axis, bool keepDims = false}) {
@@ -274,37 +277,38 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         }
       }
       return ScalarTensor<num>(maxValue!);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        num? resultValue;
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          if (resultValue == null || val < resultValue) {
-            resultValue = val;
-          }
-        }
-        operatorHelper.addResult(resultValue!);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num? resultValue;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        if (resultValue == null || val < resultValue) {
+          resultValue = val;
+        }
+      }
+      operatorHelper.addResult(resultValue!);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<int> argMin({int? axis, bool keepDims = false}) {
@@ -318,39 +322,39 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         }
       }
       return ScalarTensor<int>(index!);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<int> operatorHelper = OperatorHelper<int>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        num? resultValue;
-        int? index;
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          if (resultValue == null || val < resultValue) {
-            resultValue = val;
-            index = i;
-          }
-        }
-        operatorHelper.addResult(index!);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<int> operatorHelper = OperatorHelper<int>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num? resultValue;
+      int? index;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        if (resultValue == null || val < resultValue) {
+          resultValue = val;
+          index = i;
+        }
+      }
+      operatorHelper.addResult(index!);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<num> sum({int? axis, bool keepDims = false}) {
@@ -360,35 +364,35 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         maxValue += element;
       }
       return ScalarTensor<num>(maxValue);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        num resultValue = 0;
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          resultValue += val;
-        }
-        operatorHelper.addResult(resultValue);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num resultValue = 0;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        resultValue += val;
+      }
+      operatorHelper.addResult(resultValue);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<num> mean({int? axis, bool keepDims = false}) {
@@ -398,35 +402,35 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
         maxValue += element;
       }
       return ScalarTensor<num>(maxValue / tensor.length);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        num resultValue = 0;
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          resultValue += val;
-        }
-        operatorHelper.addResult(resultValue / shape[axis]);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num resultValue = 0;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        resultValue += val;
+      }
+      operatorHelper.addResult(resultValue / shape[axis]);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<num> median({int? axis, bool keepDims = false}) {
@@ -437,37 +441,37 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
       num first = tensorCopy[center.floor()];
       num second = tensorCopy[center.ceil()];
       return ScalarTensor<num>((first + second) / 2);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-      List<num> orderedList = [];
-      for (int i = 0; i < externlLoop; i++) {
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          orderedList.add(val);
-        }
-        double center = shape[axis] / 2;
-        num first = orderedList[center.floor()];
-        num second = orderedList[center.ceil()];
-        operatorHelper.addResult((first + second) / 2);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+    List<num> orderedList = [];
+    for (int i = 0; i < externlLoop; i++) {
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        orderedList.add(val);
+      }
+      double center = shape[axis] / 2;
+      num first = orderedList[center.floor()];
+      num second = orderedList[center.ceil()];
+      operatorHelper.addResult((first + second) / 2);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   BaseTensor<num> std({int? axis, bool keepDims = false}) {
@@ -485,50 +489,50 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
       }
 
       return ScalarTensor<num>(math.sqrt(sumation / (tensor.length - 1)));
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+    }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
 
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num meanValue = 0;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        meanValue += val;
+      }
+      meanValue /= shape[axis];
+
+      num sumation = 0;
 
       for (int i = 0; i < externlLoop; i++) {
-        num meanValue = 0;
         for (int y = 0; y < shape[axis]; y++) {
           int factor = i ~/ innerDimensions;
           int location = i % innerDimensions;
           int pointer = location + factor * jump;
 
           num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          meanValue += val;
+          sumation += math.pow(val - meanValue, 2);
         }
-        meanValue /= shape[axis];
-
-        num sumation = 0;
-
-        for (int i = 0; i < externlLoop; i++) {
-          for (int y = 0; y < shape[axis]; y++) {
-            int factor = i ~/ innerDimensions;
-            int location = i % innerDimensions;
-            int pointer = location + factor * jump;
-
-            num val = rowOrderIndexing(pointer + (y * innerDimensions));
-            sumation += math.pow(val - meanValue, 2);
-          }
-        }
-
-        operatorHelper.addResult(math.sqrt(sumation / (shape[axis] - 1)));
       }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
+
+      operatorHelper.addResult(math.sqrt(sumation / (shape[axis] - 1)));
     }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   BaseTensor<num> variance({int? axis, bool keepDims = false}) {
@@ -546,56 +550,56 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
       }
 
       return ScalarTensor<num>(sumation / (tensor.length - 1));
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-      OperatorHelper<num> operatorHelper = OperatorHelper<num>();
+    }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+    OperatorHelper<num> operatorHelper = OperatorHelper<num>();
 
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      num meanValue = 0;
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        meanValue += val;
+      }
+      meanValue /= shape[axis];
+
+      num sumation = 0;
 
       for (int i = 0; i < externlLoop; i++) {
-        num meanValue = 0;
         for (int y = 0; y < shape[axis]; y++) {
           int factor = i ~/ innerDimensions;
           int location = i % innerDimensions;
           int pointer = location + factor * jump;
 
           num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          meanValue += val;
+          sumation += math.pow(val - meanValue, 2);
         }
-        meanValue /= shape[axis];
-
-        num sumation = 0;
-
-        for (int i = 0; i < externlLoop; i++) {
-          for (int y = 0; y < shape[axis]; y++) {
-            int factor = i ~/ innerDimensions;
-            int location = i % innerDimensions;
-            int pointer = location + factor * jump;
-
-            num val = rowOrderIndexing(pointer + (y * innerDimensions));
-            sumation += math.pow(val - meanValue, 2);
-          }
-        }
-
-        operatorHelper.addResult(sumation / (shape[axis] - 1));
       }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
+
+      operatorHelper.addResult(sumation / (shape[axis] - 1));
     }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<num> maximum(HomogeneousTensor<num> other) {
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     OperatorHelper<num> operatorHelper = OperatorHelper();
@@ -615,9 +619,9 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
   }
 
   HomogeneousTensor<num> minimum(HomogeneousTensor<num> other) {
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     OperatorHelper<num> operatorHelper = OperatorHelper();
@@ -643,37 +647,37 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
       QuickSort<num> quickSort = QuickSort<num>(tensor)..sort();
       operatorHelper.addResultList(quickSort.data);
       return operatorHelper.resultHomogeneousTensor(shape);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        List<num> resultValue = [];
-
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          resultValue.add(val);
-        }
-        QuickSort<num> quickSort = QuickSort<num>(resultValue)..sort();
-
-        operatorHelper.addResultList(quickSort.data);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      List<num> resultValue = [];
+
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        resultValue.add(val);
+      }
+      QuickSort<num> quickSort = QuickSort<num>(resultValue)..sort();
+
+      operatorHelper.addResultList(quickSort.data);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 
   HomogeneousTensor<int> argSort({int? axis, bool keepDims = false}) {
@@ -683,36 +687,36 @@ extension NumHomogeneousTensor on HomogeneousTensor<num> {
       QuickSort<num> quickSort = QuickSort<num>(tensor)..sort();
       operatorHelper.addResultList(quickSort.indcies);
       return operatorHelper.resultHomogeneousTensor(shape);
-    } else if (axis >= 0 && axis < shape.length) {
-      late final Shape resultShape;
-      if (keepDims) {
-        resultShape = shape.replaceDim(axis, 1);
-      } else {
-        resultShape = shape.removeDim(axis);
-      }
-
-      int externlLoop = shape.shape.multiply(exclude: axis);
-      int innerDimensions = shape.shape.multiply(start: axis + 1);
-      int jump = shape.shape.multiply(start: axis);
-
-      for (int i = 0; i < externlLoop; i++) {
-        List<num> resultValue = [];
-
-        for (int y = 0; y < shape[axis]; y++) {
-          int factor = i ~/ innerDimensions;
-          int location = i % innerDimensions;
-          int pointer = location + factor * jump;
-
-          num val = rowOrderIndexing(pointer + (y * innerDimensions));
-          resultValue.add(val);
-        }
-        QuickSort<num> quickSort = QuickSort<num>(resultValue)..sort();
-
-        operatorHelper.addResultList(quickSort.indcies);
-      }
-      return operatorHelper.resultHomogeneousTensor(resultShape);
-    } else {
-      throw Exception();
     }
+    if (axis < 0 || axis > shape.length) {
+      throw RangeException('axis', 0, shape.length);
+    }
+    late final Shape resultShape;
+    if (keepDims) {
+      resultShape = shape.replaceDim(axis, 1);
+    } else {
+      resultShape = shape.removeDim(axis);
+    }
+
+    int externlLoop = shape.shape.multiply(exclude: axis);
+    int innerDimensions = shape.shape.multiply(start: axis + 1);
+    int jump = shape.shape.multiply(start: axis);
+
+    for (int i = 0; i < externlLoop; i++) {
+      List<num> resultValue = [];
+
+      for (int y = 0; y < shape[axis]; y++) {
+        int factor = i ~/ innerDimensions;
+        int location = i % innerDimensions;
+        int pointer = location + factor * jump;
+
+        num val = rowOrderIndexing(pointer + (y * innerDimensions));
+        resultValue.add(val);
+      }
+      QuickSort<num> quickSort = QuickSort<num>(resultValue)..sort();
+
+      operatorHelper.addResultList(quickSort.indcies);
+    }
+    return operatorHelper.resultHomogeneousTensor(resultShape);
   }
 }

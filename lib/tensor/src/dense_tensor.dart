@@ -72,21 +72,6 @@ class DenseTensor<T extends Object> extends HomogeneousTensor<T> {
   }
 
   @override
-  DenseTensor<T> where(bool Function(T) condition, T Function(T) operation) {
-    List<T> result = [];
-
-    for (T element in tensor) {
-      if (condition(element)) {
-        result.add(operation(element));
-      } else {
-        result.add(element);
-      }
-    }
-
-    return DenseTensor<T>._(result, shape, memoryOrder);
-  }
-
-  @override
   DenseTensor<T> swapAxis(int a, int b) {
     return DenseTensor<T>._(tensor, shape.swap(a, b), memoryOrder);
   }

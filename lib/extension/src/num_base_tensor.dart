@@ -70,27 +70,27 @@ extension NumBaseTensorExtension on BaseTensor<num> {
     if (this is HomogeneousTensor<num> && other is HomogeneousTensor<num>) {
       return (this as HomogeneousTensor<num>).homogeneousAdd(other);
     }
-    throw Exception();
+    throw NotSupportedOperationType('add', this);
   }
 
   BaseTensor<num> subtract(BaseTensor<num> other) {
     if (this is HomogeneousTensor<num> && other is HomogeneousTensor<num>) {
       return (this as HomogeneousTensor<num>).homogeneousSubtract(other);
     }
-    throw Exception();
+    throw NotSupportedOperationType('subtract', this);
   }
 
   BaseTensor<num> divid(BaseTensor<num> other) {
     if (this is HomogeneousTensor<num> && other is HomogeneousTensor<num>) {
       return (this as HomogeneousTensor<num>).homogeneousDivid(other);
     }
-    throw Exception();
+    throw NotSupportedOperationType('divid', this);
   }
 
   BaseTensor<num> multiply(BaseTensor<num> other) {
     if (this is HomogeneousTensor<num> && other is HomogeneousTensor<num>) {
       return (this as HomogeneousTensor<num>).homogeneousMultiply(other);
     }
-    throw Exception();
+    throw NotSupportedOperationType('multiply', this);
   }
 }

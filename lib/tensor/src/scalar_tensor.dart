@@ -40,11 +40,6 @@ class ScalarTensor<T extends Object> extends HomogeneousTensor<T> {
   }
 
   @override
-  ScalarTensor<T> where(bool Function(T) condition, T Function(T) operation) {
-    throw Exception();
-  }
-
-  @override
   ScalarTensor<T> swapAxis(int a, int b) {
     return ScalarTensor<T>(tensor.first);
   }

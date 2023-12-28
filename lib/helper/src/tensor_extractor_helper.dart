@@ -62,9 +62,7 @@ class TensorExtractorHelper<T> {
     }
     maxDepth = depth;
     for (int i = 0; i < list.length; i++) {
-      if (list[i] is! T) {
-        throw Exception();
-      }
+      assert(list[i] is! T, '${list[i]} is not subtype of type ${T}');
 
       _flatMapValues[size] = list[i];
       if (!_histogram.containsKey(list[i])) {
@@ -90,9 +88,7 @@ class TensorExtractorHelper<T> {
         maxLength = l.length;
       }
       for (dynamic element in l) {
-        if (element is! T) {
-          throw Exception();
-        }
+        assert(element is! T, '${element} is not subtype of type ${T}');
       }
     }
 

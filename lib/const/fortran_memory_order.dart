@@ -17,6 +17,9 @@ class FortranMemoryOrder extends MemoryOrder {
     } else {
       column = shape[shape.length - 2];
     }
+
+    column = shape[shape.length - 2];
+
     return (index % shape.last) * column + (index ~/ shape.last);
   }
   //TODO add method to flatten list according to column order

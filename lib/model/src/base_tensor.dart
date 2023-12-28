@@ -1,6 +1,8 @@
+import 'package:dtensor/model/src/tensor_slice.dart';
 import 'package:dtensor/util/util.dart';
 
 import '../../const/tensor_order.dart';
+import '../../exception/not_supported_for_type.dart';
 import '../../helper/helper.dart';
 import '../../tensor/tensor.dart';
 import 'memory_order.dart';
@@ -16,10 +18,11 @@ abstract class BaseTensor<T extends Object> {
   MemoryOrder get memoryOrder;
 
   T operator [](int index) {
-    if (index > tensor.length) {
+    try {
+      return tensor[index];
+    } catch (e) {
       throw Exception();
     }
-    return tensor[index];
   }
 
   Shape get shape;
@@ -30,8 +33,21 @@ abstract class BaseTensor<T extends Object> {
 
   T rowOrderIndexing(int index);
   T columnOrderIndexing(int row);
-  E getElement<E extends Object>(List<int> index);
-  E getElementByTensor<E extends Object>(BaseTensor<int> index);
+  BaseTensor<T> getElement(List<int> index);
+  BaseTensor<T> getElementByTensor(BaseTensor<int> index);
+  BaseTensor<T> unique() {
+    Map<T, int> uniqueMap = {};
+    for (T element in tensor) {
+      uniqueMap[element] = 0;
+    }
+
+    return DenseTensor<T>(
+        uniqueMap.keys.toList(),
+        Shape(shape: [uniqueMap.length], size: uniqueMap.length),
+        memoryOrder.order);
+  }
+
+  BaseTensor<T> slice(TensorSlice slice);
 
   BaseTensor<T> transpose();
 
@@ -39,7 +55,8 @@ abstract class BaseTensor<T extends Object> {
     return tensor.contains(value);
   }
 
-  BaseTensor<T> where(bool Function(T) condition, T Function(T) operation);
+  BaseTensor<E> tensorWhere<E extends Object>(E Function(T) wherefunction);
+  BaseTensor<T> where(bool Function(T) wherefunction);
 
   BaseTensor<T> axisRowElements(int index, int axis);
   @override

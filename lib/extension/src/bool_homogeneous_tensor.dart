@@ -5,9 +5,9 @@ extension BoolHomogeneousTensorExtension on HomogeneousTensor<bool> {
     if (tensor is ScalarTensor<bool> && other.tensor is ScalarTensor<bool>) {
       return ScalarTensor<bool>(tensor.first & other.tensor.first);
     }
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     OperatorHelper<bool> operatorHelper = OperatorHelper();
@@ -26,9 +26,9 @@ extension BoolHomogeneousTensorExtension on HomogeneousTensor<bool> {
     if (tensor is ScalarTensor<bool> && other.tensor is ScalarTensor<bool>) {
       return ScalarTensor<bool>(tensor.first | other.tensor.first);
     }
-    final Shape? resultShape = Shape.tryProdcast(shape, other.shape);
+    final Shape? resultShape = Shape.tryBroadcast(shape, other.shape);
     if (resultShape == null) {
-      throw Exception();
+      throw BroadcastException(shape, other.shape);
     }
 
     OperatorHelper<bool> operatorHelper = OperatorHelper();

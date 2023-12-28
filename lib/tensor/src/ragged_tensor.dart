@@ -1,5 +1,6 @@
 import 'package:dtensor/const/c_memory_order.dart';
 import 'package:dtensor/const/fortran_memory_order.dart';
+import 'package:dtensor/model/src/tensor_slice.dart';
 import 'package:dtensor/tensor/src/dense_tensor.dart';
 
 import '../../const/tensor_order.dart';
@@ -20,7 +21,7 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
   }
 
   @override
-  E getElement<E extends Object>(List<int> index) {
+  BaseTensor<T> getElement(List<int> index) {
     throw Exception();
   }
 
@@ -77,18 +78,14 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
   }
 
   @override
-  RaggedTensor<T> where(bool Function(T) condition, T Function(T) operation) {
-    List<T> result = [];
+  RaggedTensor<E> tensorWhere<E extends Object>(E Function(T) wherefunction) {
+    List<E> result = [];
 
     for (T element in tensor) {
-      if (condition(element)) {
-        result.add(operation(element));
-      } else {
-        result.add(element);
-      }
+      result.add(wherefunction(element));
     }
 
-    return RaggedTensor<T>._(result, shape, memoryOrder);
+    return RaggedTensor<E>._(result, shape, memoryOrder);
   }
 
   @override
@@ -122,8 +119,32 @@ class RaggedTensor<T extends Object> extends BaseTensor<T> {
   }
 
   @override
-  getElementByTensor<E extends Object>(BaseTensor<int> index) {
+  BaseTensor<T> getElementByTensor(BaseTensor<int> index) {
     // TODO: implement getElementByTensor
+    throw UnimplementedError();
+  }
+
+  @override
+  BaseTensor<T> where(bool Function(T p1) wherefunction) {
+    // TODO: implement where
+    throw UnimplementedError();
+  }
+
+  @override
+  BaseTensor<T> unique() {
+    // TODO: implement unique
+    throw UnimplementedError();
+  }
+
+  @override
+  BaseTensor<T> subTensor({required int start, required int end}) {
+    // TODO: implement subTensor
+    throw UnimplementedError();
+  }
+
+  @override
+  BaseTensor<T> slice(TensorSlice slice) {
+    // TODO: implement slice
     throw UnimplementedError();
   }
 }

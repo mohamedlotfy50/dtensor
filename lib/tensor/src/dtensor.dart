@@ -1,4 +1,7 @@
 import 'dart:io' show File;
+import 'package:dtensor/model/src/tensor_slice.dart';
+
+import '../../exception/not_supported_for_type.dart';
 import '../../model/model.dart';
 import 'scalar_tensor.dart';
 import 'sparse_tensor.dart';
@@ -17,13 +20,21 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
   final BaseTensor<T> _tensor;
 
   List<int> get shape => _tensor.shape.shape;
-  int get size => _tensor.shape.size;
+  int get length => _tensor.shape.size;
   dynamic get value => _tensor.value;
   @override
   Type get runtimeType => _tensor.runtimeType;
   @override
   String toString() {
     return _tensor.toString();
+  }
+
+  T operator [](int index) {
+    try {
+      return _tensor[index];
+    } catch (e) {
+      throw Exception();
+    }
   }
 
   @override
@@ -88,8 +99,8 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
     return DTensor<double>._(DenseTensor.linspace(start, end, delta));
   }
 
-  dynamic get(List<int> index) {
-    return _tensor.getElement(index);
+  DTensor<T> get(List<int> index) {
+    return DTensor._(_tensor.getElement(index));
   }
 
   dynamic getFromDtensor(DTensor<int> index) {
@@ -110,8 +121,8 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
     throw Exception();
   }
 
-  DTensor<T> subTensor({int start = 0, required int end}) {
-    throw Exception();
+  DTensor<T> slice(TensorSlice slice) {
+    return DTensor<T>._(_tensor.slice(slice));
   }
 
   static DTensor<num> argMax(DTensor<num> tensor,
@@ -141,6 +152,10 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
 
     return DTensor<T>._(
         (_tensor as HomogeneousTensor<T>).swapAxis(axis1, axis2));
+  }
+
+  DTensor<E> tensorWhere<E extends Object>(E Function(T) whereFunction) {
+    return DTensor<E>._(_tensor.tensorWhere<E>(whereFunction));
   }
 
   static DTensor<num> dot(DTensor<num> first, DTensor<num> second) {
@@ -191,10 +206,14 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
     return inputTensor.mean(axis: axis, keepDims: keepDims);
   }
 
-  static DTensor<I> mode<I extends Object>(DTensor<I> inputTensor,
+  static DTensor<I> tensorMode<I extends Object>(DTensor<I> inputTensor,
       {int? axis, bool keepDims = false}) {
     return DTensor<I>._(
         inputTensor._tensor.mode(axis: axis, keepDims: keepDims));
+  }
+
+  DTensor<T> mode({int? axis, bool keepDims = false}) {
+    return DTensor<T>._(_tensor.mode(axis: axis, keepDims: keepDims));
   }
 
   static DTensor<num> median(DTensor<num> inputTensor,
@@ -209,4 +228,163 @@ class DTensor<T extends Object> extends Iterable<DTensor<T>> {
   static DTensor<num> minimum(DTensor<num> first, DTensor<num> second) {
     return first.minimum(second);
   }
+
+  DTensor<T> unique() {
+    return DTensor<T>._(_tensor.unique());
+  }
+
+  @override
+  bool any(bool Function(DTensor<T> element) test) {
+    // TODO: implement any
+    throw UnimplementedError();
+  }
+
+  @override
+  bool contains(Object? element) {
+    if (element is! T) {
+      throw Exception();
+    }
+    return _tensor.contains(element);
+  }
+
+  @override
+  DTensor<T> elementAt(int index) {
+    return DTensor<T>._(ScalarTensor<T>(_tensor[index]));
+  }
+
+  @override
+  bool every(bool Function(DTensor<T> element) test) {
+    // TODO: implement every
+    throw UnimplementedError();
+  }
+
+  // @override
+  // Iterable<T> expand<T>(Iterable<T> Function(DTensor<T> element) toElements) {
+  //   // TODO: implement expand
+  //   throw UnimplementedError();
+  // }
+
+  @override
+  // TODO: implement first
+  DTensor<T> get first => DTensor._(ScalarTensor<T>(_tensor.tensor.first));
+
+  @override
+  DTensor<T> firstWhere(bool Function(DTensor<T> element) test,
+      {DTensor<T> Function()? orElse}) {
+    // TODO: implement firstWhere
+    throw UnimplementedError();
+  }
+
+  // @override
+  // T fold<T>(
+  //     T initialValue, T Function(T previousValue, DTensor<T> element) combine) {
+  //   // TODO: implement fold
+  //   throw UnimplementedError();
+  // }
+
+  @override
+  Iterable<DTensor<T>> followedBy(Iterable<DTensor<T>> other) {
+    // TODO: implement followedBy
+    throw UnimplementedError();
+  }
+
+  @override
+  void forEach(void Function(DTensor<T> element) action) {
+    // TODO: implement forEach
+  }
+
+  @override
+  // TODO: implement isEmpty
+  bool get isEmpty => throw UnimplementedError();
+
+  @override
+  // TODO: implement isNotEmpty
+  bool get isNotEmpty => throw UnimplementedError();
+
+  @override
+  String join([String separator = ""]) {
+    // TODO: implement join
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement last
+  DTensor<T> get last => DTensor._(ScalarTensor<T>(_tensor.tensor.last));
+
+  @override
+  DTensor<T> lastWhere(bool Function(DTensor<T> element) test,
+      {DTensor<T> Function()? orElse}) {
+    // TODO: implement lastWhere
+    throw UnimplementedError();
+  }
+
+  // @override
+  // Iterable<T> map<T>(T Function(DTensor<T> e) toElement) {
+  //   // TODO: implement map
+  //   throw UnimplementedError();
+  // }
+
+  @override
+  DTensor<T> reduce(
+      DTensor<T> Function(DTensor<T> value, DTensor<T> element) combine) {
+    // TODO: implement reduce
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement single
+  DTensor<T> get single => throw UnimplementedError();
+
+  @override
+  DTensor<T> singleWhere(bool Function(DTensor<T> element) test,
+      {DTensor<T> Function()? orElse}) {
+    // TODO: implement singleWhere
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<DTensor<T>> skip(int count) {
+    // TODO: implement skip
+    throw UnimplementedError();
+  }
+
+  @override
+  Iterable<DTensor<T>> skipWhile(bool Function(DTensor<T> value) test) {
+    // TODO: implement skipWhile
+    throw UnimplementedError();
+  }
+
+  @override
+  DTensor<T> take(int count) {
+    // TODO: implement take
+    throw UnimplementedError();
+  }
+
+  @override
+  DTensor<T> takeWhile(bool Function(DTensor<T> value) test) {
+    // TODO: implement takeWhile
+    throw UnimplementedError();
+  }
+
+  @override
+  List<DTensor<T>> toList({bool growable = true}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Set<DTensor<T>> toSet() {
+    throw UnimplementedError();
+  }
+
+  @override
+  DTensor<T> where(bool Function(DTensor<T> element) test) {
+    // return DTensor<T>._(_tensor.where(test));
+    throw Exception();
+  }
+
+  // @override
+  // Iterable whereType<T>() {
+  //   // TODO: implement whereType
+  //   throw UnimplementedError();
+  // }
 }

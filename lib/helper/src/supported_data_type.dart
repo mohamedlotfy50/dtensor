@@ -1,11 +1,13 @@
 // import 'package:complex_num/complex_num.dart';
 
+import 'package:dtensor/exception/not_supported_type.dart';
+
 class DataTypeHelper<T> {
   bool isSupportedFromNumpy<T>(String type) {
     Type? t = _numpyTypeMap[type];
 
     if (t == null) {
-      throw Exception();
+      throw NotSupportedType(type);
     }
 
     if ((t == int || t == double) && T == num) {
