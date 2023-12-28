@@ -41,6 +41,13 @@ Creating `zeros` or `one` tensors with speific shape
  final zeros = DTensor<int>.zeros([9, 5, 4, 3]);
 ```
 
+### Numpy Integration
+
+```dart
+  final numpy = DTensor.load(File('save_file.npy'));
+
+```
+
 ### Mathmatical operations
 Use matrix multiplications over ND tensor
 ```dart 
